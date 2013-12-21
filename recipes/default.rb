@@ -37,3 +37,18 @@ service "numa08_net" do
 	action [ :enable, :start]
 	supports :status =>true, :restart => true, :start => true, :stop => true
 end
+
+package "nginx" do
+	action :install
+end
+
+template "/etc/nginx/conf.d/default.conf" do
+	source "default.conf.erb"
+	mode 0644
+	owner "root"
+	group "root"
+end
+
+service "nginx" do
+	action [:enable, :start]
+end
