@@ -26,3 +26,14 @@ template "/etc/rc.d/init.d/numa08_net" do
 	owner "root"
 	group "root"
 end
+
+bash "chkconfig" do
+	code <<-EOC
+	chkconfig --add numa08_net
+	EOC
+end
+
+service "numa08_net" do
+	action [ :enable, :start]
+	supports :status =>true, :restart => true, :start => true, :stop => true
+end
