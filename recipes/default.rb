@@ -19,3 +19,10 @@ bash "install numa08" do
 		mv #{node.numa08.app_dir} #{node.numa08.home}
 	EOC
 end
+
+template "/etc/rc.d/init.d/numa08_net" do
+	source "numa08_net.erb"
+	mode 0755
+	owner "root"
+	group "root"
+end

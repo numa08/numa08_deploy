@@ -1,0 +1,108 @@
+#!/bin/bash
+#
+# Version 0.9
+#
+# chkconfig : - 80 20
+# description: numa08_net is my portal web site
+
+#### Application Specify Configuration
+app_name="numa08_net"
+app_home="<%= node[:numa08][:home] %>"
+app_pid_file="${app_home}/RUNNING_PID"
+app_start_script="${app_home}/bin/${app_name}"
+
+#### Application Run COnfiguration
+run_arg_port="-Dhttp.port=<%= node[:numa08][:run_port] %>"
+run_arg_pid="-Dpidfile.path=${app_pid_file}"
+
+app_pid=0
+
+show_error_on_app_isnot_exist() {
+cat << EOF
+  Could not find application run script at ${app_home}
+  Do you deploy your application?
+EOF
+}
+
+check_pids(){
+  if [ -f "${app_pid_file}" ]; then
+    app_pid=$(cat "${app_pid_file}")
+  else
+    app_pid=0
+  fi
+}
+
+check_app(){
+  if ! [ -f "${app_start_script}" ];then
+    show_error_on_app_isnot_exist
+    exit 1
+  fi
+}
+
+start(){
+  check_pids
+  check_app
+  echo -n "Startting ${app_name}"
+
+  sh ${app_start_script} ${run_arg_port} ${run_arg_pid} >/dev/null 2>&1 &
+  local retval=$?
+  if [[ $retval == 0 ]];then
+    echo -e "\t\t [\033[1;32m  OK  \033[0m]"
+  else
+    echo -e "\t\t [\033[1;31m  FAILED  \033[0m]"
+  fi
+
+  return $retval
+}
+
+stop(){
+  check_pids
+  echo -n "Stopping ${app_name}"
+  local retval=0
+  if [[ ${app_pid} > 0 ]];then
+    kill -15 ${app_pid}
+    echo -e "\t\t [\033[1;32m  OK  \033[0m]"
+    retval=0
+  else
+    echo -e "\t\t [\033[1;31m  FAILED  \033[0m]"
+    retval=1
+  fi
+
+  return $retval
+}
+
+status(){
+  check_pids
+
+  if [[ ${app_pid} > 0 ]];then
+    echo "${app_name} (pid ${app_pid} ) is runnning..."
+  else
+    echo "${app_name} is stopping"
+  fi
+}
+  
+RETVAL=0
+case "$1" in
+  start)
+    start
+    RETVAL=$?
+    ;;
+  stop)
+    stop
+    RETVAL=$?
+    ;;
+  status)
+    status
+    RETVAL=$?
+    ;;
+  restart)
+    stop
+    start
+    RETVAL=$?
+    ;;
+  *)
+    echo "Usage ${app_name} : (start | stop | status | restart)"
+    RETVAL=2
+esac
+
+exit ${RETVAL}
